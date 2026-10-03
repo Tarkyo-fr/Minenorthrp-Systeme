@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minenorthdrill:bank_vault",
+    "minecraft:chest",
+    "minecraft:trapped_chest",
+    "minecraft:barrel"
+  ]
+}

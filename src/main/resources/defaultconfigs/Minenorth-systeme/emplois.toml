@@ -1,0 +1,196 @@
+# MineNorth Systeme - Pôle Emploi
+# Ajoutez/supprimez des blocs [[jobs]], puis utilisez /emploireload.
+
+[general]
+enabled = true
+default_job = "civil"
+# Commande console d'attribution optionnelle. Placeholders : {player}, {uuid}, {job}
+assign_command = ""
+premium_permission = "premium.job"
+
+[salary]
+# Désactivé par défaut.
+enabled = false
+interval_minutes = 40
+# Exemple : "money give {player} {salary}"
+command = ""
+
+[[jobs]]
+id = "civil"
+name = "Civil"
+description = "Vivez votre vie et développez vos activités."
+max = 0
+salary = 0
+premium = false
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "taxi"
+name = "Taxi"
+description = "Emmenez vos clients à leurs destinations."
+max = 0
+salary = 0
+premium = false
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "avocat"
+name = "Avocat"
+description = "Défendez vos clients pour vous faire de l'argent."
+max = 0
+salary = 0
+premium = false
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "cuisinier"
+name = "Cuisinier"
+description = "Préparez des plats et travaillez en cuisine."
+max = 2
+salary = 0
+premium = false
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "psychopathe"
+name = "Psychopathe"
+description = "Métier réservé aux joueurs autorisés."
+max = 2
+salary = 0
+premium = true
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "hackeur"
+name = "Hackeur"
+description = "Hackez des systèmes."
+max = 2
+salary = 0
+premium = true
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "livreur"
+name = "Livreur"
+description = "Livrez des colis."
+max = 0
+salary = 0
+premium = false
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "vigile"
+name = "Vigile"
+description = "Surveillez et sécurisez."
+max = 0
+salary = 0
+premium = false
+candidature = false
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "pompier"
+name = "Pompier / SAMU"
+description = "Métier sur candidature."
+max = 0
+salary = 0
+premium = false
+candidature = true
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "banquier"
+name = "Banquier"
+description = "Métier sur candidature."
+max = 0
+salary = 0
+premium = false
+candidature = true
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "agentimmo"
+name = "Agent immobilier"
+description = "Métier sur candidature."
+max = 0
+salary = 0
+premium = false
+candidature = true
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
+
+[[jobs]]
+id = "police"
+name = "Police"
+description = "Métier sur candidature."
+max = 0
+salary = 0
+premium = false
+candidature = true
+permission = ""
+icon = "minecraft:paper"
+select_command = ""
+leave_command = ""
+clear_inventory_on_select = false
+clear_inventory_on_leave = false
