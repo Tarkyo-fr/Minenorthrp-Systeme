@@ -24,7 +24,7 @@ public final class ClientNetworkHandler {
 
     public static void openIdentity(fr.minenorth.drill.network.ModNetwork.IdentityViewPacket p) { Minecraft.getInstance().setScreen(new IdentityScreen(p)); }
 
-    public static void openJobMenu(fr.minenorth.drill.network.ModNetwork.JobViewPacket p) { Minecraft.getInstance().setScreen(new JobMenuScreen(p)); }
+    public static void openJobs(fr.minenorth.drill.network.ModNetwork.JobViewPacket p) { Minecraft.getInstance().setScreen(new JobMenuScreen(p)); }
 
     public static void setProgress(int index, int total) {
         if (Minecraft.getInstance().screen instanceof HackingScreen screen) {

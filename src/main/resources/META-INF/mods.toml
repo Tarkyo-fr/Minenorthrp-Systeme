@@ -3,7 +3,7 @@ loaderVersion="[47,)"
 license="MIT"
 [[mods]]
 modId="minenorthdrill"
-version="1.21.0"
+version="1.23.0"
 displayName="MineNorth Systeme"
 authors="MineNorth RP"
 description='''Système MineNorth RP pour Minecraft 1.20.1 Forge : outils de braquage, coffres-forts, piratage de banque et gestion des portes propriétaires.'''
@@ -23,5 +23,11 @@ side="BOTH"
 modId="geckolib"
 mandatory=true
 versionRange="[4.7,5)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.minenorthdrill]]
+modId="minenorth_eurobank"
+mandatory=true
+versionRange="[1.0.0,2)"
 ordering="AFTER"
 side="BOTH"

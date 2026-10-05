@@ -3,185 +3,77 @@ package fr.minenorth.drill.client;
 import fr.minenorth.drill.network.ModNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
-/** Carte d'identité MineNorth : création définitive et consultation. */
 public class IdentityScreen extends Screen {
     private final ModNetwork.IdentityViewPacket data;
     private EditBox lastName, firstName, birthDate, birthPlace, nationality;
 
-    private static final int NAVY = 0xFF173B68;
-    private static final int BLUE = 0xFF2B5C92;
-    private static final int TEXT = 0xFF17212B;
-    private static final int MUTED = 0xFF64707C;
-    private static final int CARD = 0xFFF5F7F9;
+    public IdentityScreen(ModNetwork.IdentityViewPacket data) { super(Component.literal("Carte d'identité")); this.data=data; }
 
-    public IdentityScreen(ModNetwork.IdentityViewPacket data) {
-        super(Component.literal("Carte d'identité"));
-        this.data = data;
+    private MineNorthButton btn(int x,int y,int w,int h,String label,int color,Runnable r){return addRenderableWidget(new MineNorthButton(x,y,w,h,Component.literal(label),color,r));}
+    private EditBox field(int x,int y,int w,String hint,String value){EditBox b=new EditBox(font,x,y,w,18,Component.literal(hint));b.setHint(Component.literal(hint));b.setValue(value);addRenderableWidget(b);return b;}
+
+    @Override protected void init(){
+        clearWidgets();
+        if(data.creation()) {
+            int w=Math.min(560,width-30), x=(width-w)/2, y=Math.max(18,(height-310)/2);
+            if(data.exists()){
+                btn(x+24,y+210,w-48,22,"CARTE PERDUE — RÉÉDITER",MineNorthStyle.CYAN,()->{ModNetwork.CHANNEL.sendToServer(new ModNetwork.IdentityLostPacket());onClose();});
+                btn(x+24,y+238,w-48,20,"FERMER",MineNorthStyle.PINK,this::onClose);
+            } else {
+                lastName=field(x+24,y+76,w-48,"Nom",""); firstName=field(x+24,y+108,w-48,"Prénom","");
+                birthDate=field(x+24,y+140,w-48,"Date de naissance",""); birthPlace=field(x+24,y+172,w-48,"Lieu de naissance","");
+                nationality=field(x+24,y+204,w-48,"Nationalité","Française");
+                btn(x+24,y+242,w-48,22,"CRÉER LA CARTE D'IDENTITÉ",MineNorthStyle.GREEN,this::save);
+            }
+        } else btn(width/2-80,height-30,160,20,"FERMER",MineNorthStyle.PINK,this::onClose);
     }
-
-    @Override
-    protected void init() {
-        super.init();
-        if (!data.creation()) {
-            addRenderableWidget(Button.builder(Component.literal("Fermer"), b -> onClose())
-                    .bounds(width / 2 - 55, height - 30, 110, 20).build());
-            return;
-        }
-
-        int panelW = Math.min(520, width - 40);
-        int left = width / 2 - panelW / 2;
-        if (data.exists()) {
-            addRenderableWidget(Button.builder(Component.literal("Carte perdue"), b -> lostCard())
-                    .bounds(left + 30, 222, panelW - 60, 24).build());
-            addRenderableWidget(Button.builder(Component.literal("Fermer"), b -> onClose())
-                    .bounds(left + 30, 252, panelW - 60, 20).build());
-            return;
-        }
-
-        lastName = field(left + 30, 72, panelW - 60, "Nom", "");
-        firstName = field(left + 30, 108, panelW - 60, "Prénom", "");
-        birthDate = field(left + 30, 144, panelW - 60, "Date de naissance", "");
-        birthPlace = field(left + 30, 180, panelW - 60, "Lieu de naissance", "");
-        nationality = field(left + 30, 216, panelW - 60, "Nationalité", "Française");
-        addRenderableWidget(Button.builder(Component.literal("Créer ma carte d'identité"), b -> save())
-                .bounds(left + 30, 252, panelW - 60, 24).build());
-    }
-
-    private EditBox field(int x, int y, int w, String hint, String value) {
-        EditBox box = new EditBox(font, x, y, w, 20, Component.literal(hint));
-        box.setHint(Component.literal(hint));
-        box.setValue(value);
-        addRenderableWidget(box);
-        return box;
-    }
-
-    private void save() {
-        ModNetwork.CHANNEL.sendToServer(new ModNetwork.IdentitySavePacket(
-                lastName.getValue(), firstName.getValue(), birthDate.getValue(),
-                birthPlace.getValue(), nationality.getValue()
-        ));
-    }
-
-    private void lostCard() {
-        ModNetwork.CHANNEL.sendToServer(new ModNetwork.IdentityLostPacket());
-        onClose();
-    }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    private void save(){ModNetwork.CHANNEL.sendToServer(new ModNetwork.IdentitySavePacket(lastName.getValue(),firstName.getValue(),birthDate.getValue(),birthPlace.getValue(),nationality.getValue()));}
+    @Override public void render(GuiGraphics g,int mx,int my,float pt){
         renderBackground(g);
-        if (data.creation()) renderCreation(g);
-        else renderCard(g);
-        super.render(g, mouseX, mouseY, partialTick);
+        if(data.creation()) renderCreation(g); else renderCard(g);
+        super.render(g,mx,my,pt);
     }
-
-    private void renderCreation(GuiGraphics g) {
-        int panelW = Math.min(520, width - 40);
-        int panelH = data.exists() ? 270 : 310;
-        int x = width / 2 - panelW / 2;
-        int y = data.exists() ? 55 : 25;
-        g.fill(x, y, x + panelW, y + panelH, 0xFF101820);
-        g.renderOutline(x, y, panelW, panelH, 0xFF58718B);
-        g.fill(x, y, x + panelW, y + 43, NAVY);
-        g.drawString(font, "RÉPUBLIQUE DE MINENORTH", x + 18, y + 10, 0xFFFFFFFF, false);
-        g.drawString(font, data.exists() ? "CARTE D'IDENTITÉ" : "CRÉATION DE LA CARTE D'IDENTITÉ", x + 18, y + 25, 0xFFDCE9F8, false);
-
-        if (data.exists()) {
-            g.drawString(font, "Votre carte d'identité existe déjà.", x + 30, y + 65, 0xFFFFFFFF, false);
-            g.drawString(font, "Elle est définitive et ne peut pas être modifiée.", x + 30, y + 84, 0xFFB9C5D0, false);
-            g.drawString(font, "Vous avez perdu votre carte ?", x + 30, y + 128, 0xFFFFFFFF, false);
-            g.drawString(font, "Utilisez le bouton ci-dessous pour en recevoir une nouvelle.", x + 30, y + 147, 0xFFB9C5D0, false);
+    private void renderCreation(GuiGraphics g){
+        int w=Math.min(560,width-30),x=(width-w)/2,y=Math.max(18,(height-310)/2);
+        MineNorthStyle.panel(g,x,y,w,280,data.exists()?"IDENTITÉ EXISTANTE":"CRÉATION DE L'IDENTITÉ","MINE NORTH RP • DOCUMENT PERSONNEL");
+        if(data.exists()){
+            g.drawString(font,"Cette identité est déjà enregistrée.",x+24,y+78,MineNorthStyle.TEXT,false);
+            g.drawString(font,"Elle est définitive et ne peut pas être modifiée par le joueur.",x+24,y+98,MineNorthStyle.MUTED,false);
+            g.drawString(font,"Numéro : "+data.cardNumber(),x+24,y+135,MineNorthStyle.BLUE,false);
+            g.drawString(font,"Vous pouvez uniquement demander une nouvelle carte si elle est perdue.",x+24,y+158,MineNorthStyle.TEXT,false);
         } else {
-            g.drawString(font, "Les informations saisies seront définitives.", x + 30, y + 284, 0xFFB9C5D0, false);
+            g.drawString(font,"Les informations seront enregistrées définitivement.",x+24,y+62,MineNorthStyle.TEXT,false);
+            g.drawString(font,"Nom",x+24,y+70,MineNorthStyle.BLUE,false);
+            g.drawString(font,"Prénom",x+24,y+102,MineNorthStyle.BLUE,false);
+            g.drawString(font,"Date de naissance",x+24,y+134,MineNorthStyle.BLUE,false);
+            g.drawString(font,"Lieu de naissance",x+24,y+166,MineNorthStyle.BLUE,false);
+            g.drawString(font,"Nationalité",x+24,y+198,MineNorthStyle.BLUE,false);
         }
     }
-
-    private void renderCard(GuiGraphics g) {
-        int cardW = Math.min(640, width - 40);
-        int cardH = 315;
-        int cardX = width / 2 - cardW / 2;
-        int cardY = Math.max(18, height / 2 - cardH / 2 - 12);
-
-        g.fill(cardX + 4, cardY + 5, cardX + cardW + 4, cardY + cardH + 5, 0x55000000);
-        g.fill(cardX, cardY, cardX + cardW, cardY + cardH, CARD);
-        g.renderOutline(cardX, cardY, cardW, cardH, NAVY);
-        g.renderOutline(cardX + 2, cardY + 2, cardW - 4, cardH - 4, 0xFFCBD4DD);
-
-        g.fill(cardX, cardY, cardX + cardW, cardY + 52, NAVY);
-        g.drawString(font, "RÉPUBLIQUE DE MINENORTH", cardX + 20, cardY + 10, 0xFFFFFFFF, false);
-        g.drawString(font, "CARTE NATIONALE D'IDENTITÉ", cardX + 20, cardY + 27, 0xFFD9E7F7, false);
-        g.drawString(font, "FR", cardX + cardW - 38, cardY + 18, 0xFFFFFFFF, false);
-
-        int photoX = cardX + 24;
-        int photoY = cardY + 72;
-        int photoW = 142;
-        int photoH = 176;
-        g.fill(photoX, photoY, photoX + photoW, photoY + photoH, 0xFFD9DEE3);
-        g.renderOutline(photoX, photoY, photoW, photoH, 0xFFB2BBC4);
-        drawPlayerFace(g, photoX + 8, photoY + 8, photoW - 16);
-        drawCenteredNoShadow(g, "PHOTO", photoX + photoW / 2, photoY + photoH - 17, 0xFF66717C);
-
-        int infoX = cardX + 194;
-        int infoW = cardW - 218;
-        int y = cardY + 73;
-        drawField(g, "NOM", data.lastName(), infoX, y, infoW);
-        drawField(g, "PRÉNOM", data.firstName(), infoX, y + 43, infoW);
-        drawField(g, "DATE DE NAISSANCE", data.birthDate(), infoX, y + 86, infoW);
-        drawField(g, "LIEU DE NAISSANCE", data.birthPlace(), infoX, y + 129, infoW);
-        // Un peu plus d'espace avant la nationalité pour éviter le chevauchement avec la zone du bas.
-        drawField(g, "NATIONALITÉ", data.nationality(), infoX, y + 169, infoW);
-
-        g.fill(cardX + 194, cardY + 266, cardX + cardW - 24, cardY + 267, 0xFFD3D9DF);
-        g.drawString(font, "N° " + data.cardNumber(), cardX + 194, cardY + 276, TEXT, false);
-        g.drawString(font, "DOCUMENT OFFICIEL", cardX + 194, cardY + 292, MUTED, false);
-
-        if (!data.presenter().isBlank()) {
-            drawCenteredNoShadow(g, "Carte présentée par " + data.presenter(), width / 2, cardY + cardH + 12, 0xFFE2E7EC);
-        }
+    private void renderCard(GuiGraphics g){
+        int w=Math.min(700,width-30),h=340,x=(width-w)/2,y=Math.max(15,(height-h)/2-5);
+        g.fill(x+5,y+6,x+w+5,y+h+6,0x22000000);g.fill(x,y,x+w,y+h,0xFFF8FAFC);g.renderOutline(x,y,w,h,0xFFB8C5D0);g.renderOutline(x+2,y+2,w-4,h-4,0xFFD6DEE5);
+        g.fill(x,y,x+w,y+58,MineNorthStyle.NAVY);
+        g.drawString(font,MineNorthStyle.bold("RÉPUBLIQUE DE MINENORTH"),x+20,y+10,0xFFFFFFFF,false);
+        g.drawString(font,"CARTE NATIONALE D'IDENTITÉ",x+20,y+29,0xFFD9E7F7,false);
+        drawFlag(g,x+w-52,y+12,30,18);
+        int px=x+22,py=y+76,pw=150,ph=180;g.fill(px-2,py-2,px+pw+2,py+ph+2,0xFFFFFFFF);g.renderOutline(px-2,py-2,pw+4,ph+4,0xFFB2BBC4);g.fill(px,py,px+pw,py+ph,0xFFE2E6EA);drawFace(g,px+9,py+8,132);
+        int ix=x+198,iw=w-222,yy=y+78;fieldText(g,"NOM",data.lastName(),ix,yy,iw);fieldText(g,"PRÉNOM",data.firstName(),ix,yy+42,iw);fieldText(g,"DATE DE NAISSANCE",data.birthDate(),ix,yy+84,iw);fieldText(g,"LIEU DE NAISSANCE",data.birthPlace(),ix,yy+126,iw);fieldText(g,"NATIONALITÉ",data.nationality(),ix,yy+168,iw);
+        g.fill(x+22,y+272,x+w-22,y+273,0xFFD3D9DF);g.drawString(font,"N° DE CARTE",x+22,y+284,MineNorthStyle.BLUE,false);g.drawString(font,data.cardNumber(),x+22,y+299,MineNorthStyle.TEXT,false);
+        drawQr(g,x+w-66,y+276);g.drawString(font,"MINE NORTH RP",x+w-170,y+302,MineNorthStyle.MUTED,false);
+        if(!data.presenter().isBlank()){String t="Carte présentée par "+data.presenter();g.drawString(font,t,width/2-font.width(t)/2,y+h+10,MineNorthStyle.MUTED,false);}
     }
-
-    private void drawField(GuiGraphics g, String label, String value, int x, int y, int maxWidth) {
-        g.drawString(font, label, x, y, BLUE, false);
-        String safe = value == null ? "" : value;
-        g.drawString(font, trimToWidth(safe, maxWidth), x, y + 14, TEXT, false);
-    }
-
-    private String trimToWidth(String text, int maxWidth) {
-        if (font.width(text) <= maxWidth) return text;
-        String suffix = "...";
-        int end = text.length();
-        while (end > 0 && font.width(text.substring(0, end) + suffix) > maxWidth) end--;
-        return text.substring(0, end) + suffix;
-    }
-
-    private void drawCenteredNoShadow(GuiGraphics g, String text, int centerX, int y, int color) {
-        g.drawString(font, text, centerX - font.width(text) / 2, y, color, false);
-    }
-
-    private void drawPlayerFace(GuiGraphics g, int x, int y, int size) {
-        ResourceLocation skin = findSkin();
-        if (skin != null) PlayerFaceRenderer.draw(g, skin, x, y, size, true, false);
-        else drawCenteredNoShadow(g, "PHOTO", x + size / 2, y + size / 2 - 4, MUTED);
-    }
-
-    private ResourceLocation findSkin() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.player.getUUID().equals(data.subjectUuid())) return mc.player.getSkinTextureLocation();
-        if (mc.getConnection() != null) {
-            PlayerInfo info = mc.getConnection().getPlayerInfo(data.subjectUuid());
-            if (info != null) return info.getSkinLocation();
-        }
-        return null;
-    }
-
-    @Override
-    public boolean isPauseScreen() { return false; }
+    private void fieldText(GuiGraphics g,String label,String value,int x,int y,int w){g.drawString(font,label,x,y,MineNorthStyle.BLUE,false);String v=value==null?"":value;while(font.width(v)>w&&v.length()>3)v=v.substring(0,v.length()-4)+"...";g.drawString(font,v,x,y+14,MineNorthStyle.TEXT,false);}
+    private void drawFlag(GuiGraphics g,int x,int y,int w,int h){int t=w/3;g.fill(x,y,x+t,y+h,0xFF1B3F8F);g.fill(x+t,y,x+2*t,y+h,0xFFFFFFFF);g.fill(x+2*t,y,x+w,y+h,0xFFED2939);g.renderOutline(x,y,w,h,0xFFCBD4DD);}
+    private void drawQr(GuiGraphics g,int x,int y){int c=4;int[][]p={{1,1,1,0,1,1,1,0},{1,0,1,0,0,0,1,0},{1,1,1,0,1,1,1,0},{0,0,0,1,0,1,0,1},{1,1,0,0,1,0,1,0},{0,1,1,1,0,0,0,1},{1,0,1,0,1,1,0,0},{1,1,1,0,0,1,1,1}};for(int r=0;r<8;r++)for(int j=0;j<8;j++)if(p[r][j]==1)g.fill(x+j*c,y+r*c,x+j*c+c,y+r*c+c,MineNorthStyle.BLUE);}
+    private void drawFace(GuiGraphics g,int x,int y,int size){ResourceLocation skin=findSkin();if(skin!=null)PlayerFaceRenderer.draw(g,skin,x,y,size,true,false);else {String t="PHOTO";g.drawString(font,t,x+size/2-font.width(t)/2,y+size/2,MineNorthStyle.MUTED,false);}}
+    private ResourceLocation findSkin(){Minecraft mc=Minecraft.getInstance();if(mc.player!=null&&mc.player.getUUID().equals(data.subjectUuid()))return mc.player.getSkinTextureLocation();if(mc.getConnection()!=null){PlayerInfo i=mc.getConnection().getPlayerInfo(data.subjectUuid());if(i!=null)return i.getSkinLocation();}return null;}
+    @Override public boolean isPauseScreen(){return false;}
 }

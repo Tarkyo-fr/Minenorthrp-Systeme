@@ -5,130 +5,55 @@ import fr.minenorth.drill.item.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-
 import java.util.List;
 
-/** Mini-jeu de piratage : mémoriser 4 numéros parmi 6 puis les reproduire. */
 public class HackingScreen extends Screen {
-    private final List<Integer> sequence;
-    private int progress = 0;
-    private final long endTime;
-    private final long sequenceStart;
-    private int lastVisibleSequenceIndex = -2;
-
-        private static final long STEP_MS = 650L;
-    private static final long INTRO_MS = 900L;
-    private static final long TOTAL_MS = 30000L;
-
-    public HackingScreen(List<Integer> sequence) {
-        super(Component.translatable("screen.minenorthdrill.hacking"));
-        this.sequence = List.copyOf(sequence);
-        long now = System.currentTimeMillis();
-        this.sequenceStart = now;
-        this.endTime = now + TOTAL_MS;
+    private final List<Integer> sequence; private int progress=0; private final long endTime,sequenceStart; private int lastVisible=-2;
+    private static final long STEP_MS=650L,INTRO_MS=900L,TOTAL_MS=30000L;
+    public HackingScreen(List<Integer> sequence){super(Component.literal("Piratage MineNorth"));this.sequence=List.copyOf(sequence);long now=System.currentTimeMillis();sequenceStart=now;endTime=now+TOTAL_MS;}
+    public void setProgress(int index,int total){progress=index;}
+    private boolean showing(){return System.currentTimeMillis()-sequenceStart<INTRO_MS+sequence.size()*STEP_MS;}
+    private int visible(){long e=System.currentTimeMillis()-sequenceStart;if(e<INTRO_MS)return -1;int s=(int)((e-INTRO_MS)/STEP_MS);return s>=0&&s<sequence.size()?s:-1;}
+    @Override public void tick(){long now=System.currentTimeMillis();if(now>=endTime){onClose();return;}int v=visible();if(v!=lastVisible){if(v>=0)play(ModSounds.HACK_BEEP.get(),.72f,1f+v*.03f);lastVisible=v;}}
+    private void play(net.minecraft.sounds.SoundEvent sound,float vol,float pitch){if(minecraft!=null&&minecraft.level!=null&&minecraft.player!=null)minecraft.level.playLocalSound(minecraft.player.getX(),minecraft.player.getY(),minecraft.player.getZ(),sound,net.minecraft.sounds.SoundSource.MASTER,vol,pitch,false);}
+    private int cell(){return Math.max(48,Math.min(72,Math.min((width-190)/3,(height-260)/2)));} private int gap(){return 8;} private int gridW(){return cell()*3+gap()*2;} private int left(){return(width-gridW())/2;} private int top(){return Math.max(125,(height-(cell()*2+gap()))/2+42);}
+    /** Texte net : aucun doublage/ombre, pour rester lisible sur l'interface claire. */
+    private void centered(GuiGraphics g, String text, int y, int color) {
+        g.drawString(font, text, width / 2 - font.width(text) / 2, y, color, false);
     }
 
-    public void setProgress(int index, int total) { this.progress = index; }
-    @Override public boolean isPauseScreen() { return false; }
-
-    private boolean showingSequence() {
-        return System.currentTimeMillis() - sequenceStart < INTRO_MS + sequence.size() * STEP_MS;
-    }
-
-    private int visibleSequenceIndex() {
-        long elapsed = System.currentTimeMillis() - sequenceStart;
-        if (elapsed < INTRO_MS) return -1;
-        int step = (int)((elapsed - INTRO_MS) / STEP_MS);
-        return step >= 0 && step < sequence.size() ? step : -1;
-    }
-
-    @Override public void tick() {
-        long now = System.currentTimeMillis();
-        if (now >= endTime) {
-            onClose();
-            return;
-        }
-        int visible = visibleSequenceIndex();
-        if (visible != lastVisibleSequenceIndex) {
-            if (visible >= 0) playLocalSound(ModSounds.HACK_BEEP.get(), 0.72F, 1.0F + visible * 0.03F);
-            lastVisibleSequenceIndex = visible;
-        }
-    }
-
-    private void playLocalSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
-        if (minecraft != null && minecraft.level != null && minecraft.player != null) {
-            minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), sound, net.minecraft.sounds.SoundSource.MASTER, volume, pitch, false);
-        }
-    }
-
-    private int cellSize() {
-        return Math.max(48, Math.min(72, Math.min((width - 190) / 3, (height - 260) / 2)));
-    }
-
-    private int gap() { return 8; }
-    private int gridWidth() { return cellSize() * 3 + gap() * 2; }
-    private int gridLeft() { return (width - gridWidth()) / 2; }
-    private int gridTop() { return Math.max(125, (height - (cellSize()*2 + gap())) / 2 + 42); }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    @Override public void render(GuiGraphics g,int mx,int my,float pt){
         renderBackground(g);
-        int cell = cellSize();
-        int gap = gap();
-        int left = gridLeft();
-        int top = gridTop();
-        int gridH = cell * 2 + gap;
-        int panelLeft = Math.max(12, left - 28);
-        int panelRight = Math.min(width - 12, left + gridWidth() + 28);
-        int panelTop = 10;
-        int panelBottom = Math.min(height - 10, top + gridH + 24);
-        int remaining = Math.max(0, (int)Math.ceil((endTime - System.currentTimeMillis()) / 1000.0));
-        boolean showing = showingSequence();
-        int visible = visibleSequenceIndex();
-
-        g.fill(panelLeft, panelTop, panelRight, panelBottom, 0xF20F151D);
-        g.renderOutline(panelLeft, panelTop, panelRight-panelLeft, panelBottom-panelTop, 0xFF687583);
-        g.drawCenteredString(font, Component.translatable("screen.minenorthdrill.hacking"), width/2, 24, 0xFFFFFF);
-        Component instruction = showing
-                ? Component.translatable("screen.minenorthdrill.remember_simple", sequence.size())
-                : Component.translatable("screen.minenorthdrill.click_sequence_simple");
-        g.drawCenteredString(font, instruction, width/2, 48, showing ? 0x55FFFF : 0x55FF55);
-        g.drawCenteredString(font, Component.translatable("screen.minenorthdrill.progress", progress, sequence.size()), width/2, 70, 0xFFFFFF);
-        g.drawCenteredString(font, Component.translatable("screen.minenorthdrill.time", remaining), width/2, 91, remaining <= 10 ? 0xFF5555 : 0xFFAA00);
-
-        for (int i=0; i<6; i++) {
-            int col=i%3, row=i/3;
-            int x=left+col*(cell+gap), y=top+row*(cell+gap);
-            int sequenceIndex=sequence.indexOf(i);
-            boolean current=showing && visible>=0 && sequence.get(visible)==i;
-            boolean done=sequenceIndex>=0 && sequenceIndex<progress;
-            boolean hovered=!showing && mouseX>=x && mouseX<x+cell && mouseY>=y && mouseY<y+cell;
-            int color=current?0xFF00AEEF:done?0xFF2ECC71:hovered?0xFF303942:0xFF1B2026;
-            g.fill(x,y,x+cell,y+cell,color);
-            g.renderOutline(x,y,cell,cell,0xFF8A96A2);
-            if(current) g.drawCenteredString(font,String.valueOf(i+1),x+cell/2,y+cell/2-4,0xFFFFFFFF);
-            else if(done) g.drawCenteredString(font,"✓",x+cell/2,y+cell/2-4,0xFFFFFFFF);
-            else if(!showing) g.drawCenteredString(font,String.valueOf(i+1),x+cell/2,y+cell/2-4,0xFFAAAAAA);
+        int c=cell(),gap=gap(),l=left(),t=top(),gh=c*2+gap(),remaining=Math.max(0,(int)Math.ceil((endTime-System.currentTimeMillis())/1000.0)),v=visible();
+        int px=Math.max(12,l-40),pr=Math.min(width-12,l+gridW()+40),pb=Math.min(height-10,t+gh+48);
+        // Interface claire et lisible : aucun texte avec ombre.
+        g.fill(px+5,10,pr+5,pb+5,0x33000000);
+        g.fill(px,10,pr,pb,0xFFF7F9FB);
+        g.renderOutline(px,10,pr-px,pb-10,0xFF8EA6BA);
+        g.fill(px,10,pr,68,MineNorthStyle.NAVY);
+        g.drawString(font,MineNorthStyle.bold("MINE NORTH - PIRATAGE"),px+18,22,0xFFFFFFFF,false);
+        centered(g,showing()?"MÉMORISEZ LA SÉQUENCE":"REPRODUISEZ LA SÉQUENCE",80,showing()?MineNorthStyle.CYAN:MineNorthStyle.GREEN);
+        centered(g,"Progression : "+progress+" / "+sequence.size(),101,MineNorthStyle.TEXT);
+        centered(g,"Temps restant : "+remaining+" s",122,remaining<=10?MineNorthStyle.ALERT:MineNorthStyle.WARN);
+        // Petit bandeau d'instruction pour éviter que le texte se perde sur le fond.
+        int infoY=136;
+        g.fill(l-16,infoY,l+gridW()+16,infoY+24,0xFFE8EEF3);
+        g.renderOutline(l-16,infoY,gridW()+32,24,0xFFC2CED8);
+        centered(g,showing()?"OBSERVEZ LES CASES QUI S'ALLUMENT":"CLIQUEZ DANS LE BON ORDRE",infoY+7,0xFF173B68);
+        for(int i=0;i<6;i++){
+            int col=i%3,row=i/3,x=l+col*(c+gap),y=t+row*(c+gap),seq=sequence.indexOf(i);
+            boolean current=showing()&&v>=0&&sequence.get(v)==i,done=seq>=0&&seq<progress,hov=!showing()&&mx>=x&&mx<x+c&&my>=y&&my<y+c;
+            int color=current?MineNorthStyle.CYAN:done?MineNorthStyle.GREEN:hov?MineNorthStyle.HOVER:0xFFDFE7ED;
+            g.fill(x+3,y+4,x+c+3,y+c+4,0x26000000);
+            g.fill(x,y,x+c,y+c,color);
+            g.renderOutline(x,y,c,c,current?0xFF0B7DAF:0xFF9FB0BE);
+            String label=current?String.valueOf(i+1):done?"✓":String.valueOf(i+1);
+            int textColor=current||done?0xFFFFFFFF:0xFF173B68;
+            g.drawString(font,label,x+c/2-font.width(label)/2,y+c/2-4,textColor,false);
         }
+        super.render(g,mx,my,pt);
     }
-
-    @Override
-    public boolean mouseClicked(double mouseX,double mouseY,int button) {
-        if(button!=0 || showingSequence()) return true;
-        int cell=cellSize(), gap=gap(), left=gridLeft(), top=gridTop();
-        for(int i=0;i<6;i++) {
-            int col=i%3,row=i/3,x=left+col*(cell+gap),y=top+row*(cell+gap);
-            if(mouseX>=x&&mouseX<x+cell&&mouseY>=y&&mouseY<y+cell) {
-                playLocalSound(ModSounds.HACK_BEEP.get(), 0.55F, 1.12F);
-                ModNetwork.CHANNEL.sendToServer(new ModNetwork.HackClickPacket(i));
-                return true;
-            }
-        }
-        return true;
-    }
-
-    @Override public void onClose() {
-        ModNetwork.CHANNEL.sendToServer(new ModNetwork.CloseHackPacket());
-        super.onClose();
-    }
+    @Override public boolean mouseClicked(double mx,double my,int button){if(button!=0||showing())return true;int c=cell(),gap=gap(),l=left(),t=top();for(int i=0;i<6;i++){int col=i%3,row=i/3,x=l+col*(c+gap),y=t+row*(c+gap);if(mx>=x&&mx<x+c&&my>=y&&my<y+c){play(ModSounds.HACK_BEEP.get(),.55f,1.12f);ModNetwork.CHANNEL.sendToServer(new ModNetwork.HackClickPacket(i));return true;}}return true;}
+    @Override public void onClose(){ModNetwork.CHANNEL.sendToServer(new ModNetwork.CloseHackPacket());super.onClose();}
+    @Override public boolean isPauseScreen(){return false;}
 }

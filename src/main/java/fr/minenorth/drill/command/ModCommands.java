@@ -41,7 +41,7 @@ public class ModCommands {
         dispatcher.register(Commands.literal("pemploi")
                 .requires(s -> s.hasPermission(2))
                 .then(Commands.argument("joueur", EntityArgument.player())
-                        .executes(c -> openPemploi(EntityArgument.getPlayer(c, "joueur")))));
+                        .executes(c -> openFranceTravail(EntityArgument.getPlayer(c, "joueur")))));
         dispatcher.register(Commands.literal("emploireload").requires(s -> s.hasPermission(2)).executes(c -> reloadJobs(c.getSource())));
         dispatcher.register(Commands.literal("monmetier").executes(c -> myJob(c.getSource())));
         dispatcher.register(Commands.literal("pemploiadmin").requires(s -> s.hasPermission(2))
@@ -71,7 +71,7 @@ public class ModCommands {
                 .then(Commands.literal("status").executes(c -> status(c.getSource()))));
     }
 
-    private static int openPemploi(ServerPlayer target){ JobManager.openMenu(target); return 1; }
+    private static int openFranceTravail(ServerPlayer target){ JobManager.openMenu(target); return 1; }
     private static int reloadJobs(CommandSourceStack source){ JobConfig.load(); source.sendSuccess(() -> Component.literal("§aConfiguration des métiers rechargée : "+JobConfig.jobs().size()+" métier(s). Salaire "+(JobConfig.salaryEnabled()?"activé":"désactivé")+"."), true); return 1; }
     private static int myJob(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException { ServerPlayer p=source.getPlayerOrException(); JobConfig.Job j=JobManager.current(p); source.sendSuccess(() -> Component.literal("§eVotre métier : §f"+(j==null?JobConfig.defaultJob():j.name)), false); return 1; }
     private static int seeJob(CommandSourceStack source, ServerPlayer p){ JobConfig.Job j=JobManager.current(p); source.sendSuccess(() -> Component.literal("§e"+p.getGameProfile().getName()+" exerce : §f"+(j==null?JobConfig.defaultJob():j.name)), false); return 1; }

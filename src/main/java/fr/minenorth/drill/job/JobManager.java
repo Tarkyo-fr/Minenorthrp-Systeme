@@ -33,21 +33,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber
 public final class JobManager {
     private static final String TAG = "MineNorthJob";
-    private static final String TITLE = "§1Pôle Emploi";
+    private static final String TITLE = "§1France Travail";
     private static final Set<UUID> VIEWERS = ConcurrentHashMap.newKeySet();
     private static long lastSalaryTick = 0;
     private static final Map<String, PermissionNode<Boolean>> PERMISSION_NODES = new HashMap<>();
     private JobManager() {}
 
     public static void openMenu(ServerPlayer player) {
-        if (!JobConfig.enabled()) { player.displayClientMessage(Component.literal("§cLe Pôle Emploi est actuellement désactivé."), true); return; }
-        fr.minenorth.drill.network.ModNetwork.sendJobMenu(player, JobConfig.jobs(), getJob(player));
-    }
-
-    public static void selectById(ServerPlayer player, String id) {
-        JobConfig.Job job = JobConfig.byId(id);
-        if (job == null) { player.displayClientMessage(Component.literal("§cCe métier n'existe plus dans la configuration."), true); return; }
-        select(player, job);
+        if (!JobConfig.enabled()) { player.displayClientMessage(Component.literal("§cFrance Travail est actuellement désactivé."), true); return; }
+        fr.minenorth.drill.network.ModNetwork.sendJobMenu(player);
     }
 
     private static int onlineCount(String id) { int n=0; for(ServerPlayer p:currentServerPlayers()) if(id.equals(getJob(p)))n++; return n; }
@@ -97,19 +91,5 @@ public final class JobManager {
 
     @SubscribeEvent public static void tick(TickEvent.ServerTickEvent e){if(e.phase!=TickEvent.Phase.END)return;CURRENT_SERVER=e.getServer(); if(!JobConfig.salaryEnabled())return;long now=e.getServer().getTickCount();long interval=JobConfig.intervalMinutes()*60L*20L;if(now-lastSalaryTick<interval)return;lastSalaryTick=now;for(ServerPlayer p:e.getServer().getPlayerList().getPlayers()){JobConfig.Job j=current(p);if(j!=null&&j.salary>0){String c=JobConfig.salaryCommand().replace("{player}",p.getGameProfile().getName()).replace("{uuid}",p.getUUID().toString()).replace("{salary}",String.valueOf(j.salary)).replace("{job}",j.id);e.getServer().getCommands().performPrefixedCommand(e.getServer().createCommandSourceStack().withSuppressedOutput(),c);p.displayClientMessage(Component.literal("§aSalaire reçu : §f"+j.salary+"€ §7("+j.name+")"),false);}}}
 
-    @SubscribeEvent public static void containerClosed(net.minecraftforge.event.entity.player.PlayerContainerEvent.Close e){ if(e.getEntity() instanceof ServerPlayer p) VIEWERS.remove(p.getUUID()); }
-    @SubscribeEvent public static void playerLoggedOut(PlayerEvent.PlayerLoggedOutEvent e){if(e.getEntity() instanceof ServerPlayer p)VIEWERS.remove(p.getUUID());}
-
-    private static final class JobMenu extends ChestMenu {
-        JobMenu(int id, Inventory inv){super(MenuType.GENERIC_9x6,id,inv,new SimpleContainer(54),6);}
-        @Override public void clicked(int slot,int button,ClickType type,Player player){
-            if(player instanceof ServerPlayer p && slot>=0 && slot<54 && VIEWERS.contains(p.getUUID())){
-                if(slot==53){p.closeContainer();return;}
-                if(slot<JobConfig.jobs().size()){JobConfig.Job j=JobConfig.jobs().get(slot);p.closeContainer();select(p,j);return;}
-                return;
-            }
-            super.clicked(slot,button,type,player);
-        }
-    }
-    public static boolean isJobMenu(ServerPlayer p){return VIEWERS.contains(p.getUUID())&&p.containerMenu instanceof JobMenu;}
+    public static boolean isJobMenu(ServerPlayer p){ return false; }
 }
